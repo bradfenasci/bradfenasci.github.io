@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>balls</title>
+    <style>
+        canvas {
+            cursor:none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1000" height="800" style="background-color: rgb(77, 0, 128)">
+    </canvas>
+</body>
+
+</html>
+<script>
+    boxX = []
+    boxY = []
+    speedX = []
+    speedY = []
+    radius = []
+    distanceX = []
+    mouseX = 100
+    mouseY = 100
+    mouseRadius = 15
+    alive = true
+    setInterval(loop, 45)
+    function loop() {
+        for (var i = 0; i < .5; i++) {
+            if (Math.random() > .5) {
+                boxX.push(Math.random() * -1000)
+                boxY.push(Math.random() * 1000)
+                speedX.push(Math.random() * 10)
+                speedY.push(Math.random() * 10 - 2.5)
+                radius.push(Math.random() * 100)
+            }
+            if (Math.random() < .5) {
+                boxX.push(Math.random() * 1000 + 1000)
+                boxY.push(Math.random() * -1000)
+                speedX.push(Math.random() * -10)
+                speedY.push(Math.random() * 10 - 5)
+                radius.push(Math.random() * 100)
+            }
+            if (distanceX[i] > 3000) {
+                boxX[i] = Math.random() * 1000 + 1000
+            }
+
+        }
+    }
+    var canvas = document.getElementById("canvas")
+    var ctx = canvas.getContext("2d")
+    setInterval(drawFrame, 16)
+
+    function drawFrame() {
+        if (alive === true) {
+            ctx.clearRect(0, 0, 1000, 800)
+
+            ctx.beginPath()
+            ctx.arc(mouseX, mouseY, mouseRadius, 0, 7)
+            ctx.fill()
+
+            for (var i = 0; i < boxX.length; i++) {
+                ctx.fillStyle = 'violet'
+                ctx.beginPath()
+                ctx.arc(boxX[i], boxY[i], radius[i], 0, Math.PI * 2)
+                ctx.fill()
+                boxY[i] = boxY[i] + speedY[i]
+                distanceX[i] = distanceX[i] + Math.abs(speedX[i])
+                boxX[i] = boxX[i] + speedX[i]
+                a = mouseX - boxX[i]
+                b = mouseY - boxY[i]
+                distance = Math.sqrt(a * a + b * b)
+
+                if (distance < radius[i] + mouseRadius) {
+                    if (radius[i] < mouseRadius) {
+                        mouseRadius = mouseRadius + 5
+                        boxX.splice(i, 1)
+                        boxY.splice(i, 1)
+                        speedX.splice(i, 1)
+                        speedY.splice(i, 1)
+                        radius.splice(i, 1)
+                    } else {
+                        ctx.font = "150px serif";
+                        ctx.fillStyle = 'red'
+                        ctx.fillText("get gud", 150, 350)
+                        ctx.fillText("try again?", 150, 450)
+                        alive = false
+
+                    }
+
+                }
+            }
+        }
+    }
+    document.addEventListener("mousemove", mouseMoveHandler)
+    function mouseMoveHandler(e) {
+        mouseX = e.x
+        mouseY = e.y
+    }
+    document.addEventListener("click", clickHandler)
+    function clickHandler() {
+        if (alive === false) {
+            alive = true
+            boxX = []
+            boxY = []
+            speedX = []
+            speedY = []
+            radius = []
+            distanceX = []
+            mouseX = 100
+            mouseY = 100
+            mouseRadius = 15
+        }
+    }
+</script>

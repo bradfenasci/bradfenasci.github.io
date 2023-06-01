@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>fart</title>
+</head>
+<body>
+<canvas id = "canvas" width = "800" height = "800">
+</canvas>
+</body>
+</html>
+<script>
+  boxes = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+  for(var i = 0; i < 20; i++){
+
+  }
+    var canvas = document.getElementById("canvas")
+    var ctx = canvas.getContext("2d")
+    var x = 100
+    y = 100
+    speedY = -7
+    speedX = 10
+    setInterval(drawFrame, 16)
+    function drawFrame(){
+        ctx.clearRect(0, 0, 800, 800)
+        ctx.fillRect(x, y, 100, 100)
+        y = y + speedY
+        x = x + speedX
+        if(y > 800){
+          speedY = speedY * -1
+          ctx.fillStyle = "aquamarine"
+        }
+        if(y < 0){
+          speedY = speedY * -1
+          ctx.fillStyle = "blue"
+        }
+        if(x > 800){
+          speedX = speedX * -1
+          ctx.fillStyle = "purple"
+        }
+        if(x < 0){
+          speedX = speedX * -1
+          ctx.fillStyle = "teal"
+        }
+      }
+</script>

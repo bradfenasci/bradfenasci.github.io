@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>balls</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="1700" height="1000">
+    </canvas>
+</body>
+
+</html>
+<script>
+    boxX = []
+    boxY = []
+    speedX = []
+    speedY = []
+    for (var o = 0; o < 100; o++) {
+        boxX.push(Math.random() * 1000)
+        boxY.push(Math.random() * 1000)
+        speedX.push(Math.random() * 10)
+        speedY.push(Math.random() * 10)
+    }
+
+    var canvas = document.getElementById("canvas")
+    var ctx = canvas.getContext("2d")
+    setInterval(drawFrame, 16)
+    function drawFrame() {
+        ctx.clearRect(0, 0, 1700, 1000)
+        for (var i = 0; i < boxX.length; i++) {
+            ctx.beginPath()
+            ctx.arc(boxX[i], boxY[i], 10, 0, Math.PI * 2)
+            ctx.fill()
+            boxY[i] = boxY[i] + speedY[i]
+            boxX[i] = boxX[i] + speedX[i]
+            if (boxY[i] > 1000) {
+                speedY[i] = speedY[i] * -1
+                ctx.fillStyle = "aquamarine"
+            }
+            if (boxY[i] < 0) {
+                speedY[i] = speedY[i] * -1
+                ctx.fillStyle = "black"
+            }
+            if (boxX[i] > 1700) {
+                speedX[i] = speedX[i] * -1
+                ctx.fillStyle = "black"
+            }
+            if (boxX[i] < 0) {
+                speedX[i] = speedX[i] * -1
+                ctx.fillStyle = "black"
+            }
+        }
+    }
+</script>

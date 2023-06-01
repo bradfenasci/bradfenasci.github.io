@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>platformer
+    </title>
+    <style>
+        body {
+            margin: 0px;
+        }
+
+        canvas {
+            background-color: lightgray;
+        }
+
+        img {
+            display: none;
+        }
+    </style>
+</head>
+
+<body id="body">
+    <canvas id='canvas' width='1400' height="750"></canvas>
+    <img id="cannon" src="https://benspector3.github.io/projects/platformer/asset/cannon.png">
+    <img id="player" src="halleTrue.png">
+    <img id="projectile" src="https://benspector3.github.io/projects/platformer/asset/projectile.png">
+
+    <script>
+        var canvas = document.getElementById("canvas")
+        var ctx = canvas.getContext('2d')
+
+        var halleImage
+        var cannon
+        var platformImage
+        var animationDetails = {}
+
+        //setup variables
+        const walkAcceleration = 2.5 //how much is added to the speed each frame
+        const gravity = 1 //how much is subratced from speedY each frame
+        const friction = 2   //how much the player is slowed each frame
+        const frictionBoundry = .5 //an odd variable, look at the friction calculation to figure it out. Basicly it's the point at which the player stops slowing down and just stops moving. Without this speed approaches zero and never reaches it. 
+        const maxSpeed = 10 //maximum horizontal speed, not vertical
+        const playerJumpStrength = 20 //this is subtracted from the speedY each jump
+        const frameRate = 60
+        const playerScale = .8 //makes the player just a bit smaller, 20% smaller in fact. Doesn't affect the hitbox, just the image
+
+        //player Variables
+        var playerX = 50 //initial x and y of player
+        var playerY = 100
+        var playerSpeedX = 0
+        var playerSpeedY = 0
+        var playerHeight
+        var playerWidth
+        var hitDx
+        var hitDy
+        var HitBoxWidth = 50 * playerScale
+        var hitBoxHeight = 105 * playerScale
+        var playerOnGround = false
+        var playerFacingRight = true
+        var playerDeadAndDeathAnimationDone = false
+        var firstTimeSetup = true
+        var anyKeyPress = false
+        var upPress = false
+        var leftPress = false
+        var downPress = false
+        var rightPress = false
+        var spacePress = false
+
+        //player Animation variables
+        var animationTypes = {
+            duck: "duck",
+            flyingJump: "flying-jump",
+            frontDeath: "front-death",
+            frontIdle: 'front-idle',
+            jump: 'jump',
+            lazer: 'lazer',
+            run: 'run',
+            stop: 'stop',
+            walk: 'walk',
+        }
+        var currentAnimationType = animationTypes.run
+        var frameIndex = 0
+        var jumpTimer = 0
+        var debugVar = false
+
+        //platform variables
+        var platformX = []
+        var platformY = []
+        var platformWidth = []
+        var platformHeight = []
+
+        //cannon variables
+        var cannonX = []
+        var cannonY = []
+        var cannonRotation = []
+        var cannonProjectileCountdown = []
+        var cannonTimeBetweenShots = []
+        var cannonLocation = []
+        var cannonWidth = 118
+        var cannonHeight = 80
+
+        //projectile variables
+        var projectileX = []
+        var projectileY = []
+        var projectileSpeedX = []
+        var projectileSpeedY = []
+        const projectileWidth = 24
+        const projectileHeight = projectileWidth
+
+        //collectable variables
+        var collectableX = []
+        var collectableY = []
+        const collectableWidth = 40
+        const collectableHeight = 40
+        var collectableHover = 0
+        var collectableBounce = 1
+        var collectableGravity = .1
+        var collectableImages = []
+
+        //animation variables
+        var spriteHeight = 0
+        var spriteWidth = 0
+        var maxWidth = 0
+        var maxHeight = 0
+        var spriteX = 0
+        var spriteY = 0
+        var offsetX = 0
+        var offsetY = 0
+        var groundY = 0
+
+
+
+        window.addEventListener("load", loadJson);
+
+        function loadJson() {
+            getJSON("trueHallie.json", JsonFunction);//runs this before the setup because of timing things, it's annoying.
+        }
+
+        function setupGame() {
+
+            if (firstTimeSetup) {
+                halleImage = document.getElementById("player")
+                projectileImage = document.getElementById("projectile")
+                cannonImage = document.getElementById("cannon")
+                platformImage = document.getElementById("platform1")
+                document.addEventListener("keydown", keyDownPress, false)
+                document.addEventListener("keyup", keyuppress, false)
+                firstTimeSetup = false
+                //start game
+                setInterval(main, 1000 / frameRate)
+            }
+            //create walls
+            //don't  change these. or do, I'm a comment not a cop
+            createPlatform(-50, -50, canvas.width + 100, 50) //top 
+            createPlatform(-50, canvas.height - 10, canvas.width + 100, 200) //right
+            createPlatform(-50, -50, 50, canvas.height + 500) //bottom
+            createPlatform(canvas.width, -50, 50, canvas.height + 100)
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////ONLY CHANGE BELOW THIS POINT//////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            //create platforms
+            //createPlatform(x,y,width,height) 
+            createPlatform(0, 0, 20, 1000) //side wall
+            createPlatform(1380, 0, 20, 1000) //side wall
+            createPlatform(650, 650, 300, 10) //bottom platform
+            createPlatform(400, 400, 200, 10)
+            createPlatform(600, 480, 100, 10)
+            createPlatform(600, 400, 10, 80) 
+            createPlatform(700, 200, 100, 10)
+            //create cannons
+            //you pick the wall you want the cannon on, then the position, then the time between shots in milliseconds
+            // your wall choices are: 'top' 'left' 'right' or 'bottom'
+            //createCannon("top",200,4)
+            createCannon("right", 400, 2000)
+
+            //create collectables
+            //createCollectable("www.pictureOfFish.jpg",59,299)
+            createCollectable("data:image/jpeg;base64,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", 630, 100)
+
+            
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////ONLY CHANGE ABOVE THIS POINT//////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+        }
+
+        function main() {
+            ctx.clearRect(0, 0, 1400, 750) //erase the screen so you can draw everything in it's most current position. Get rid of this line to see why we need it
+
+
+            if (playerDeadAndDeathAnimationDone) {
+                deathOfPlayer()
+                return
+            }
+
+            drawPlatforms()
+            drawProjectiles()
+            drawCannons()
+            drawCollectables()
+            playerFrictionAndGravity()
+
+            playerX = playerX + playerSpeedX
+            playerY = playerY + playerSpeedY
+
+            collision()//checks if the player will collide with something in this frame
+            keyboardControlActions() //keyboard controls. 
+            projectileCollision() //checks if the player is getting hit by a projectile in the next frame
+            collectablesCollide() //checks if player has touched a collectable
+
+
+            animate() //this changes halle's picture to the next frame so it looks animated. 
+            // debug()//debugging values. Comment this out when not debugging. 
+            drawRobot() //this actually displays the image of the robot. 
+
+            // quick note on the order of functions
+            // You must have all functions in this general order
+            // First you change the player x and y
+            // then you do collisions
+            // then you do keyboard controls
+            // lastly you draw everything
+            // keyboard controls before collisions means you can't move. changing player x and y before collisions make things jittery.
+            //order is super important. If things seem weird, try changing the order. 
+        }
+
+        function changeAnimationType() {
+            if (currentAnimationType === animationTypes.frontDeath) {
+                if (frameIndex > animationDetails[currentAnimationType].coordinates.length) {
+                    playerDeadAndDeathAnimationDone = true
+                }
+                return
+            }
+            if (jumpTimer > 0 && !playerOnGround) {
+                currentAnimationType = animationTypes.jump
+                jumpTimer--
+            } else {
+                jumpTimer = 0
+                if (Math.abs(playerSpeedX) > 0) {//if you're moving then change animation to walking or running
+                    if (leftPress || rightPress) {
+                        currentAnimationType = animationTypes.run
+                    } else {
+                        currentAnimationType = animationTypes.walk
+                    }
+                } else if (playerOnGround) {
+                    if (currentAnimationType !== animationTypes.frontIdle) {
+                        currentAnimationType = animationTypes.frontIdle
+                        // }
+                    }
+                }
+            }
+
+        }
+
+        function debug() {
+            debugVar = true
+
+            ctx.fillText("xs" + playerSpeedX + " x: " + playerX, 500, 200)
+            ctx.fillText("ys" + playerSpeedY + " y: " + playerY, 500, 250)
+
+            ctx.fillStyle = 'black'
+            ctx.fillText("on ground " + playerOnGround, 150 + playerX, playerY - 20)
+            ctx.fillText("hitx" + hitDx, 150 + playerX, playerY)
+            ctx.fillText("hity" + hitDy, 150 + playerX, playerY + 20)
+            ctx.fillText("offsetx" + offsetX, 150 + playerX, playerY + 40)
+            ctx.fillText("offsetY" + offsetY, 150 + playerX, playerY + 60)
+            // ctx.fillText("hitx" + hitDx, 150 + playerX, playerY + 80)
+            // ctx.fillText("hitx" + hitDx, 150 + playerX, playerY + 100)
+
+            ctx.fillStyle = 'grey'
+            ctx.fillRect(playerX, playerY, playerWidth, playerHeight)
+
+            //debug showing collision
+            ctx.fillStyle = "yellow"
+            ctx.fillRect(500, 100, 50, 50)
+
+            ctx.fillStyle = "green"
+            ctx.fillRect(playerX, playerY, HitBoxWidth, hitBoxHeight)
+
+            if (collision() !== undefined) {
+                ctx.fillStyle = "yellow"
+                ctx.fillRect(playerX, playerY - 50, 10, 10)
+
+            }
+        }
+
+        function animate() {
+
+            var previousFrameRate = frameIndex
+            frameIndex = frameIndex + (18 / frameRate) //+ .5 * Math.abs(playerSpeedX / maxSpeed) //only advance the animation every other frame
+            if (Math.floor(previousFrameRate) === Math.floor(frameIndex)) {
+                return
+            }
+            changeAnimationType()
+            if (frameIndex > animationDetails[currentAnimationType].coordinates.length) {
+                frameIndex = 0
+            }
+            spriteX = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].sx
+            spriteY = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].sy
+            spriteWidth = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].width
+            spriteHeight = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].height
+            maxWidth = animationDetails[currentAnimationType].maxWidth * playerScale //you have to multiply all these by scale so that when you change the size of the player all the animations scale too
+            maxHeight = animationDetails[currentAnimationType].maxHeight * playerScale
+            offsetX = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].xoffset * playerScale
+            offsetY = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].yoffset * playerScale
+            playerWidth = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].width * playerScale
+            playerHeight = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].height * playerScale
+            hitDx = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].hitDx * playerScale
+            hitDy = animationDetails[currentAnimationType].coordinates[Math.floor(frameIndex)].hitDy * playerScale
+
+        }
+
+        function drawRobot() {
+            //ctx.drawImage(imageVaribale, sourceY, SourceX, sourceWidth, sourceHeight, canvasX, canvasY, finalWidth, finalHeight)
+            //https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+            //you only need the extra four source arguments if you want to only display a portion of the picture, if you want to show the whole picture you can just do drawImage(imageVar, canvasx, canvasy, width,height)
+            //next section draws hallie. There is an if so that the image is reversed based on the direction of travel
+
+            //there is also a hitdx and hitdy, those are offsets for the animation, enable debugger to see the true hitbox in green
+            //you can enable the debug view by uncommenting the debug() function call in the main function. 
+            if (playerDeadAndDeathAnimationDone) {
+                return //return stops the function, we don't want to draw the robot after we die
+            }
+
+            if (playerFacingRight) {
+                ctx.drawImage(halleImage, spriteX, spriteY, spriteWidth, spriteHeight, playerX - hitDx, playerY - hitDy, playerWidth, playerHeight)
+            } else {//for running to the left you mirror the image. you also have to draw the 
+                ctx.save();
+                ctx.scale(-1, 1); //mirror the entire canvas
+                ctx.drawImage(halleImage, spriteX, spriteY, spriteWidth, spriteHeight, -playerX - playerWidth + hitDx, playerY - hitDy, playerWidth, playerHeight)
+                ctx.restore();//put the canvas back to normal
+            }
+        }
+
+        function collision() {
+            playerOnGround = false //you reset this every frame, if the player is actually on the ground the resolveCollision function will set it to true
+            var result = undefined
+            for (var i = 0; i < platformX.length; i++) { //check every platform
+                if (playerX + HitBoxWidth > platformX[i]) { //if the right side of the player is inside of the left side of the platform
+                    if (playerX < platformX[i] + platformWidth[i]) { //and the left side of the player is inside of the right side of the platform
+                        if (playerY < platformY[i] + platformHeight[i]) { //top of player is above bottom of platform
+                            if (playerY + hitBoxHeight > platformY[i]) {//bottom of player is below top of platform
+                                //now that we know we have collided we figure out the direction of collision
+                                result = resloveCollision(platformX[i], platformY[i], platformWidth[i], platformHeight[i])
+                            }
+                        }
+                    }
+                }
+            }
+            return result
+
+        }
+
+        function resloveCollision(objx, objy, objw, objh) {
+            //this is the return value
+            let collisionDirection = ""
+            //found here https://stackoverflow.com/questions/38648693/resolve-collision-of-two-2d-elements
+            //first we find the distance between the center of the object and the player
+            let dx = (playerX + (HitBoxWidth / 2)) - (objx + (objw / 2))
+            let dy = (playerY + (hitBoxHeight / 2)) - (objy + (objh / 2))
+
+            //get half widths of each item
+            //i'm honestly not 100% certian why this step is in there, but it works.
+            let halfWidth = (HitBoxWidth / 2) + (objw / 2)
+            let halfHeight = (hitBoxHeight / 2) + (objh / 2)
+
+            // if the x and y vector are less than the half width or half height,
+            // they we must be inside the object, causing a collision
+            //         if (Math.abs(dx) <= halfWidth) {
+            // if (Math.abs(dy) <= halfHeight) {
+            //what side are we colliding on?
+            let originx = halfWidth - Math.abs(dx)
+            let originy = halfHeight - Math.abs(dy)
+
+            if (debugVar) {
+                //debug
+                ctx.strokeStyle = 'blue'
+                ctx.beginPath()
+                ctx.moveTo(objx + dx, objy)
+                ctx.lineTo(objx, objy)
+                ctx.lineTo(objx, objy + dy)
+                ctx.stroke()
+                ctx.fillStyle = "rbga(252,186,3,.3)"
+                ctx.fillRect(playerX, playerY, HitBoxWidth, hitBoxHeight)
+            }
+
+            if (originx >= originy) {
+                if (dy > 0) {                    //bottom collision
+                    collisionDirection = 'bottom'
+                    playerY = playerY + originy + 1
+                    playerSpeedY = 0
+                } else {                         //top collision
+                    collisionDirection = 'top'
+                    playerY = playerY - originy
+                    playerSpeedY = 0
+                    playerOnGround = true
+                }
+            } else {
+                if (dx > 0) {                    //left collision
+                    collisionDirection = 'left'
+                    playerX = playerX + originx
+                    playerSpeedX = 0
+                } else {                        //right collision
+                    collisionDirection = 'right'
+                    playerX = playerX - originx
+                    playerSpeedX = 0
+                }
+            }
+
+            return collisionDirection
+
+        }
+
+        function projectileCollision() {
+            if (currentAnimationType === animationTypes.frontDeath) { //checking if the player is dead
+                //once you die we don't need you to die again, so we stop checking
+                return
+            }
+
+            //this deletes any projectiles that go off the screen
+            for (var i = 0; i < projectileX.length; i++) {
+                if (projectileX[i] > canvas.width + 100) {
+                    projectileX.splice(i, 1)//splice deletes an item from an array
+                    projectileY.splice(i, 1)
+                    projectileSpeedX.splice(i, 1)
+                    projectileSpeedY.splice(i, 1)
+                }
+                if (projectileX[i] < -100) {
+                    projectileX.splice(i, 1)
+                    projectileY.splice(i, 1)
+                    projectileSpeedX.splice(i, 1)
+                    projectileSpeedY.splice(i, 1)
+                }
+                if (projectileY[i] > canvas.height + 100) {
+                    projectileX.splice(i, 1)
+                    projectileY.splice(i, 1)
+                    projectileSpeedX.splice(i, 1)
+                    projectileSpeedY.splice(i, 1)
+                }
+                if (projectileY[i] < -100) {
+                    projectileX.splice(i, 1)
+                    projectileY.splice(i, 1)
+                    projectileSpeedX.splice(i, 1)
+                    projectileSpeedY.splice(i, 1)
+                }
+
+                //collision with the player
+                //I used the collision function because it's eaiser to reuse things
+                if (projectileX[i] < playerX + HitBoxWidth) {
+                    if (projectileX[i] + projectileWidth > playerX) {
+                        if (projectileY[i] < playerY + hitBoxHeight) {
+                            if (projectileY[i] + projectileHeight > playerY) {
+                                currentAnimationType = animationTypes.frontDeath
+                                frameIndex = 0
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+        function deathOfPlayer() {
+            ctx.fillStyle = 'grey'
+            ctx.fillRect(canvas.width / 4, canvas.height / 6, canvas.width / 2, canvas.height / 2)
+            ctx.fillStyle = 'black'
+            ctx.font = '800% serif'
+            ctx.fillText("Hold this L", canvas.width / 4, canvas.height / 6 + canvas.height / 5, canvas.width / 16 * 14)
+            ctx.font = '500% serif'
+            ctx.fillText("Press any key to start over", canvas.width / 4, canvas.height / 6 + canvas.height / 3, canvas.width / 16 * 14)
+            if (anyKeyPress) {
+                anyKeyPress = false
+                resetVariables()
+            }
+        }
+
+        function playerFrictionAndGravity() {
+            //max speed limiter for ground
+            if (playerSpeedX > maxSpeed) { //you have to regulate both forwards and backwards speed
+                playerSpeedX = maxSpeed
+            } else if (playerSpeedX < -maxSpeed) {
+                playerSpeedX = -maxSpeed
+            }
+
+            //friction
+            if (Math.abs(playerSpeedX) < 1) { //this makes sure that the player actually stops when the speed gets low enough
+                //otherwise if you just always reduce speed it will just end up jiggling
+                playerSpeedX = 0
+            }
+            else if (playerSpeedX > 0) {
+                playerSpeedX = playerSpeedX - friction
+            } else {
+                playerSpeedX = playerSpeedX + friction
+            }
+
+
+            if (playerOnGround === false) {
+                playerSpeedY = playerSpeedY + gravity
+            }
+
+
+        }
+
+        function drawPlatforms() {
+            for (var i = 0; i < platformX.length; i++) {
+                ctx.fillStyle = "grey"
+                ctx.fillRect(platformX[i], platformY[i], platformWidth[i], platformHeight[i])
+            }
+        }
+
+        function drawProjectiles() {
+            for (var i = 0; i < projectileX.length; i++) {
+                ctx.drawImage(projectileImage, projectileX[i], projectileY[i], projectileWidth, projectileHeight)
+                projectileX[i] = projectileX[i] + projectileSpeedX[i]
+                projectileY[i] = projectileY[i] + projectileSpeedY[i]
+            }
+        }
+
+        function drawCannons() {
+            for (var i = 0; i < cannonX.length; i++) {
+
+                if (cannonProjectileCountdown[i] >= cannonTimeBetweenShots[i]) {
+                    cannonProjectileCountdown[i] = 0
+                    createProjectile(cannonLocation[i], cannonX[i], cannonY[i])
+                } else {
+                    cannonProjectileCountdown[i] = cannonProjectileCountdown[i] + 1
+                }
+
+                ctx.fillStyle = "grey"
+                //canvas rotation is trash, here be dragons
+                ctx.save(); //save the current translation of the screen. 
+                ctx.translate(cannonX[i], cannonY[i]); //you are moving the top left of the screen to the pictures location, this is because you can't rotate the image, you have to rotate the whole page
+                ctx.rotate(cannonRotation[i] * Math.PI / 180); //then you rotate. rotation is centered on 0,0 on the canvas, which is why we moved the picture to 0,0 with translate(x,y)
+                ctx.drawImage(cannonImage, 0, 0, cannonWidth, cannonHeight) //you draw the image on the rotated canvas. as of this line, the picture is straight and the rest of the page is rotated
+                //also the previous line uses -width / 2 so that the picture is centered. This will mean that (0,0) is at the exact center of the image
+                ctx.translate(-cannonX[i], -cannonY[i]); //the reverse of the previous translate, this moves the page back to the correct place so that the image is no longer at (0,0)
+                ctx.restore(); //this unrotates the canvas so the canvas is straight, but now since you did that the picture looks rotated
+                //rotation is the worst thing to ever exist.
+
+            }
+        }
+
+        function drawCollectables() {
+            for (var i = 0; i < collectableImages.length; i++) {
+                if (collectableImages[i].collected !== true) {
+                    //draw on screen if not collected
+                    ctx.drawImage(collectableImages[i].image, collectableImages[i].x, collectableImages[i].y, collectableWidth, collectableHeight)
+                } else {
+                    //draw the icons at the top if collected
+                    if (collectableImages[i].alpha > .4) {
+                        collectableImages[i].alpha = collectableImages[i].alpha - .007
+                    }
+                    ctx.globalAlpha = collectableImages[i].alpha
+                    ctx.drawImage(collectableImages[i].image, 200 + 100 * i, 10, collectableWidth, collectableHeight)
+                    ctx.globalAlpha = 1
+                }
+
+                //gravity
+                collectableImages[i].speedy = collectableImages[i].speedy + collectableGravity
+                collectableImages[i].y = collectableImages[i].y + collectableImages[i].speedy
+
+                // check for collision with platforms in order to bounce
+                for (var j = 0; j < platformX.length; j++) { //check every platform
+                    if (collectableImages[i].x + collectableWidth > platformX[j]) { //if the right side of the collectable is inside of the left side of the platform
+                        if (collectableImages[i].x < platformX[j] + platformWidth[j]) { //and the left side of the collectable is inside of the right side of the platform
+                            if (collectableImages[i].y < platformY[j] + platformHeight[j]) { //top of collectable is above bottom of platform
+                                if (collectableImages[i].y + collectableHeight > platformY[j]) {//bottom of collectable is below top of platform
+                                    collectableImages[i].speedy = -5
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+            }
+        }
+
+        function collectablesCollide() {
+            for (var i = 0; i < collectableImages.length; i++) {
+                if (collectableImages[i].x + collectableWidth > playerX) { //if the right side of the collectable is inside of the left side of the platform
+                    if (collectableImages[i].x < playerX + HitBoxWidth) { //and the left side of the collectable is inside of the right side of the platform
+                        if (collectableImages[i].y < playerY + hitBoxHeight) { //top of collectable is above bottom of platform
+                            if (collectableImages[i].y + collectableHeight > playerY) {//bottom of collectable is below top of platform
+                                collectableImages[i].collected = true
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        function createPlatform(x, y, width, height) {
+            platformX.push(x)
+            platformY.push(y)
+            platformHeight.push(height)
+            platformWidth.push(width)
+        }
+
+        function createCannon(wallLocation, position, timeBetweenShots) {
+
+            cannonTimeBetweenShots.push(timeBetweenShots / (1000 / frameRate))
+            cannonProjectileCountdown.push(0)
+            cannonLocation.push(wallLocation)
+
+            if (wallLocation === 'top') {
+                cannonX.push(position)
+                cannonY.push(cannonHeight)//because of rotation the position is weird. rotation stinks
+                cannonRotation.push(180)//I'm using degrees even though rotation used radians, we convert to radians when we draw it
+            } else if (wallLocation === 'bottom') {
+                cannonX.push(position)
+                cannonY.push(canvas.height - cannonHeight)
+                cannonRotation.push(0)
+            } else if (wallLocation === 'left') {
+                cannonX.push(cannonHeight)
+                cannonY.push(position)
+                cannonRotation.push(90)
+            } else if (wallLocation === 'right') {
+                cannonX.push(canvas.width - cannonHeight)
+                cannonY.push(position)
+                cannonRotation.push(270)
+            }
+        }
+
+        function createCollectable(url, x, y) {
+            if (url !== "") {
+                var img = document.createElement('img');
+                img.src = url;
+                img.id = collectableImages.length + "image"
+                collectableImages.push({
+                    image: img,
+                    x: x,
+                    y: y,
+                    speedy: 0,
+                    collected: false,
+                    alpha: 2,
+                })
+            }
+        }
+
+        function createProjectile(wallLocation, x, y) {
+
+            if (currentAnimationType === animationTypes.frontDeath) { //checking if the player is dead
+                //once you die we don't need you to die again, so we stop checking
+                return
+            }
+
+            if (wallLocation === 'top') {
+                projectileX.push(x - 71.5)
+                projectileY.push(y - 55)
+                projectileSpeedX.push(0)
+                projectileSpeedY.push(5)
+            } else if (wallLocation === 'bottom') {
+                projectileX.push(x + 47)
+                projectileY.push(y + 50)
+                projectileSpeedX.push(0)
+                projectileSpeedY.push(-5)
+            } else if (wallLocation === 'left') {
+                projectileX.push(x - 80)
+                projectileY.push(y + 46)
+                projectileSpeedX.push(5)
+                projectileSpeedY.push(0)
+            } else if (wallLocation === 'right') {
+                projectileX.push(x + 40)
+                projectileY.push(y - 71.5)
+                projectileSpeedX.push(-5)
+                projectileSpeedY.push(0)
+            }
+        }
+
+        function keyboardControlActions() {
+            anyKeyPress = false //keyboardHandler will set this to true if you press any key. setting the variable to false here makes sure that key press dosen't stick around.
+            //this is used for respawning, basicly if you hit any key after you die this variable will be set to true and you will respawn. 
+
+            if (currentAnimationType === animationTypes.frontDeath) {
+                return
+            }
+
+            if (upPress) {
+                //playerSpeedY -= walkspeed
+            }
+            if (downPress) {
+                //playerSpeedY += walkspeed
+            }
+            if (leftPress) {
+                playerSpeedX -= walkAcceleration
+                playerFacingRight = false
+            }
+            if (rightPress) {
+                playerSpeedX += walkAcceleration
+                playerFacingRight = true
+            }
+            if (spacePress) {
+                if (playerOnGround) { //this only lets you jump if you are on the ground
+                    playerSpeedY = playerSpeedY - playerJumpStrength
+                    jumpTimer = 19 //this counts how many frames to have the jump last. 
+                    playerOnGround = false //bug fix for jump animation, you have to change this or the jump animation doesn't work
+                    frameIndex = 4
+                }
+            }
+
+
+
+        }
+
+        function keyDownPress(e) { //the e in this parenthesis is a parameter, it contains information about what key you pressed. e is also short for event in this case. 
+            anyKeyPress = true
+            if (e.key === "ArrowUp" || e.key === "w") { // || means or. || is or && is and. if one or the other is true, then true. this if is asking if the key is w or arrowup
+                upPress = true
+            }
+            if (e.key === "ArrowLeft" || e.key === "a") {
+                leftPress = true
+            }
+            if (e.key === "ArrowDown" || e.key === "s") {
+                downPress = true
+            }
+            if (e.key === "ArrowRight" || e.key === "d") {
+                rightPress = true
+            }
+            if (e.key === " ") {
+                spacePress = true
+            }
+
+        }
+
+        function keyuppress(e) { //keydown and keyup are both needed because both are important. think of a gas pedal: you want to car to know you pressed down the pedal, and you REALLY want it to know when you let up on the gas. 
+            if (e.key === "ArrowUp" || e.key === "w") {
+                upPress = false
+            }
+            if (e.key === "ArrowLeft" || e.key === "a") {
+                leftPress = false
+            }
+            if (e.key === "ArrowDown" || e.key === "s") {
+                downPress = false
+            }
+            if (e.key === "ArrowRight" || e.key === "d") {
+                rightPress = false
+            }
+            if (e.key === " ") {
+                spacePress = false
+            }
+        }
+
+        var getJSON = function (url, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.responseType = "json";
+            xhr.onload = function () {
+                var status = xhr.status;
+                if (status === 200) {
+                    callback(null, xhr.response);
+                    setupGame()
+                } else {
+                    callback(status, xhr.response);
+                }
+            };
+            xhr.send();
+        };
+
+        function JsonFunction(status, response) {
+
+            /*
+                diagram of the json
+                top level is the name of the animation
+                also don't you dare complain, this is operation sparks fault for making the animation so complicated.
+                animation name{
+                    coordinates{
+                        sx: xpadding,
+                        sy: ypadding,
+                        width: cords.swidth,
+                        height: cords.sheight,
+                        hitWidth: 50, //cords.width,
+                        hitHeight: 105,//cords.height,
+                        hitDx: 0,
+                        hitDy: 0,
+                        xoffset: xoffset,
+                        yoffset: yoffset,
+                    }
+                    maxHeight: largest size the sprite can be
+                    maxWidth: 
+                }
+            */
+            console.log(response)
+            animationDetails = response
+        }
+
+        function resetVariables() {
+            playerX = 100 //initial x and y of player
+            playerY = 100
+            playerSpeedX = 0
+            playerSpeedY = 0
+            playerDeadAndDeathAnimationDone = false
+            anyKeyPress = false
+            upPress = false
+            leftPress = false
+            downPress = false
+            rightPress = false
+            spacePress = false
+            currentAnimationType = animationTypes.run
+            frameIndex = 0
+            jumpTimer = 0
+            platformX = []
+            platformY = []
+            platformWidth = []
+            platformHeight = []
+            cannonX = []
+            cannonY = []
+            cannonRotation = []
+            cannonProjectileCountdown = []
+            cannonTimeBetweenShots = []
+            cannonLocation = []
+            projectileX = []
+            projectileY = []
+            projectileSpeedX = []
+            projectileSpeedY = []
+            collectableX = []
+            collectableY = []
+            collectableType = []
+            collectableBounce = []
+            collectableImages = []
+            setupGame()
+        }
+
+    </script>
+</body>
+
+</html>

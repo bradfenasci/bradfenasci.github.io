@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #box {
+            width: 50px;
+            height: 50px;
+            position: absolute;
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Bouncing Box</title>
+</head>
+
+<body>
+    <div id="box">
+
+    </div>
+</body>
+
+</html>
+<script>
+    var x = 0
+    y = 0
+    speedX = 5
+    speedY = 5
+    color = 0 
+   
+    setInterval(moveBox, 18)
+   
+    function moveBox() {
+        document.getElementById("box").style.top = y + "px"
+        document.getElementById("box").style.left = x + "px"
+        document.getElementById("box").style.backgroundColor = "hsl(" + color + ",100%,50%)"
+        color++
+        x = x + speedX
+        y = y + speedY
+        if (x > 1300) {
+            speedX = speedX * -1
+        }
+        if (x < 0) {
+            speedX = speedX * -1
+        }
+        if (y > 600) {
+            speedY = speedY * -1
+        }
+        if (y < 0) {
+            speedY = speedY * -1
+        } 
+    }
+        document.addEventListener("click" , clickHandler)
+        function clickHandler(){
+            speedX = speedX * 1.5
+            speedY = speedY * 1.5
+        }
+    
+</script>

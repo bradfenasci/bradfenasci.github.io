@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #canvas {
+            position: absolute
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>ur mom</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="800" height="600">
+
+    </canvas>
+</body>
+
+</html>
+<script>
+    var canvas = document.getElementById("canvas")
+    var ctx = canvas.getContext("2d")
+    x = 0
+    y = 0
+    speedX = 5
+    speedY = 5
+    setInterval(main, 30)
+    function main() {
+        ctx.clearRect(0, 0, 2000, 2000)
+        ctx.fillRect(0, 0, 100, 100)
+        document.getElementById("canvas").style.top = y + "px"
+        document.getElementById("canvas").style.left = x + "px"
+        x = x + speedX
+        y = y + speedY
+        if (x > 1300) {
+            speedX = speedX * -1
+        }
+        if (x < 0) {
+            speedX = speedX * -1
+        }
+        if (y > 600){
+            speedY = speedY * -1
+        }
+        if (y < 0) {
+            speedY = speedY * -1
+        }
+    }
+</script>
