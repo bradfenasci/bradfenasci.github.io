@@ -1,21 +1,85 @@
-
-body {
-  background-color: darkgreen;
-}
-
 #board {
-  width: 440px;
-  height: 440px;
-  border: 1px solid white;
-  background-color: black;
   position: relative;
+  left: 600px;
+  width: 600px;
+  height: 400px;
+  background-color: #000000;
 }
 
-#gameItem {
-  background-color: teal;
-  width: 50px;
-  height: 50px;
+#paddleA,
+#paddleB {
   position: absolute;
-/*   left: 100px; */  /* Uncomment if you want to set a "starting" position */
-/*   top: 100px;  */  /* Uncomment if you want to set a "starting" position */
+  width: 10px;
+  height: 60px;
+  background-color: #FFF;
+}
+
+#paddleA {
+  left: 10px;
+  top: 170px;
+  border-radius: 3px;
+}
+
+#paddleB {
+  right: 10px;
+  top: 170px;
+  border-radius: 3px;
+}
+
+#ball {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #FFF;
+  left: 295px;
+  top: 195px;
+  border-radius: 50px;
+}
+
+#dashedLine {
+  position: absolute;
+  width: 2px;
+  height: 400px;
+  background-color: white;
+  left: 298px;
+  /* Position the line in the center of the board */
+  top: 0;
+  border-radius: 1px;
+  /* Create rounded ends for the dashes */
+  background-image: linear-gradient(rgb(255, 255, 255), rgb(0, 0, 0));
+  /* Use a linear gradient for the dashes */
+  background-size: 100% 10px;
+  /* Set the size of the dashes */
+}
+
+#scoreA,
+#scoreB {
+  position: absolute;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#scoreA {
+  left: 50px;
+  /* Adjust the position of player A's score box */
+  top: 20px;
+}
+
+#scoreB {
+  right: 50px;
+  /* Adjust the position of player B's score box */
+  top: 20px;
+}
+
+#enableAI {
+  position: absolute;
+  top: 400px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #2ecc71;
+  color: #fff;
+  border: none;
+  cursor: pointer;
 }
