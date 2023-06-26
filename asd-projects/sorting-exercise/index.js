@@ -16,23 +16,23 @@ The CSS ids you will work with are:
 // TODO 2: Implement bubbleSort
 async function bubbleSort(array) {
     // Iterate over the array
-    for (var i = 0; i <= array.length - 1; i--) {
-        // Iterate from the end of the array towards the current position of `i`
-        for (var j = array.length - 1; j <= i + 1; j++) {
-            // Compare the current element with the previous element
-            if (array[j].value < array[j - 1].value) {
-                // Swap the elements if they are in the wrong order
-                swap(array, i, j);
-                // Update the counter
-                updateCounter(bubbleCounter);
-                // Wait for a brief moment
-                await sleep();
-            }
+    for (var i = 0; i < array.length - 1; i++) {
+      // Iterate from the end of the array towards the current position of `i`
+      for (var j = array.length - 1; j > i; j--) {
+        // Compare the current element with the previous element
+        if (array[j].value < array[j - 1].value) {
+          // Swap the elements if they are in the wrong order
+          swap(array, j, j - 1);
+          // Update the counter
+          updateCounter(bubbleCounter);
+          // Wait for a brief moment
+          await sleep();
         }
+      }
     }
-}
-
-
+  }
+  
+  
 // TODO 3: Implement quickSort
 async function quickSort(array, left, right) {
     if (right - left > 0) {
