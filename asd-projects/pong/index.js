@@ -69,7 +69,7 @@ function runProgram() {
   setTimeout(startBallMovement, 2000); // Wait for 2 seconds, then call startBallMovement
 
   function startBallMovement() {
-    ballXSpeed = 3; // Set the horizontal speed of the ball to start moving
+    ballXSpeed = 1; // Set the horizontal speed of the ball to start moving
     ballYSpeed = 1; // Set the vertical speed of the ball to start moving
   }
 
