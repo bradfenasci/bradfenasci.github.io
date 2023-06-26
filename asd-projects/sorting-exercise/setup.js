@@ -6,7 +6,7 @@
 // THE CONSTANTS BELOW MAY BE ALTERED FOR EXPERIMENTATION PURPOSES
 
 // set the delay between each sort step
-const SLEEP_AMOUNT = 5;
+const SLEEP_AMOUNT = 20;
 
 // set the max number of squares
 const MAX_SQUARES = 150;
