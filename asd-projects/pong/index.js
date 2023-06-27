@@ -12,25 +12,36 @@ function runProgram() {
   const FRAMES_PER_SECOND_INTERVAL = 1000 / FRAME_RATE; // Milliseconds per frame
 
   // Game Item Objects
-
+  
   const paddleA = {}; // Paddle A
-  paddleA.id = $('#paddleA');
-  paddleA.speed = 0;
-  paddleA.position = 170;
+        paddleA.id = $('#paddleA');
+        paddleA.speed = 0;
+        paddleA.position = 170;
   const paddleB = {}; // Paddle B
-  paddleB.id = $('#paddleB');
-  paddleB.speed = 0;
-  paddleB.position = 170;
+        paddleB.id = $('#paddleB');
+        paddleB.speed = 0;
+        paddleB.position = 170;
   const ball = {}; // Ball
-  ball.id = $('#ball');
-  ball.xSpeed = 0;
-  ball.ySpeed = 0;
-  ball.xPosition = 295;
-  ball.yPosition = 195;
+        ball.id = $('#ball');
+        ball.xSpeed = 0;
+        ball.ySpeed = 0;
+        ball.xPosition = 295;
+        ball.yPosition = 195; 
 
   // Game State Variables
   let scoreA = 0; // Player A's score
   let scoreB = 0; // Player B's score
+
+  //let paddleA.speed = 0; // initial speed of paddleA
+  //let paddleB.speed = 0; // initial speed of paddleB
+  //let ball.xSpeed = 0; // Set initial horizontal speed of the ball to 0
+  //let ball.ySpeed = 0; // Set initial vertical speed of the ball to 0
+  //let paddleA.position = 170; // initial position of paddleA
+ // let paddleB.position = 170; // initial position of paddleB
+
+  //starting ball position
+  //let ball.xPosition = 295;
+  //let ball.yPosition = 195;
 
   // AI Opponent Code
   let isAIEnabled = false;
@@ -65,14 +76,14 @@ function runProgram() {
   $(document).on('keyup', handleKeyUp); // Event handler for keyup event
 
   // Timer
-  let interval = setInterval(newFrame, FRAMES_PER_SECOND_INTERVAL); // Execute newFrame every 0.0166 seconds (60 frames per second)
-  setTimeout(startBallMovement, 2000); // Wait for 2 seconds, then call startBallMovement
+let interval = setInterval(newFrame, FRAMES_PER_SECOND_INTERVAL); // Execute newFrame every 0.0166 seconds (60 frames per second)
+setTimeout(startBallMovement, 2000); // Wait for 2 seconds, then call startBallMovement
 
-  function startBallMovement() {
-    // Set random initial speeds for the ball
-    ball.xSpeed = Math.random() < 0.5 ? -2 : 2; // Set the horizontal speed randomly to -2 or 2
-    ball.ySpeed = Math.random() < 0.5 ? -2 : 2; // Set the vertical speed randomly to -2 or 2
-  }
+function startBallMovement() {
+  // Set random initial speeds for the ball
+  ball.xSpeed = Math.random() < 0.5 ? -2 : 2; // Set the horizontal speed randomly to -2 or 2
+  ball.ySpeed = Math.random() < 0.5 ? -2 : 2; // Set the vertical speed randomly to -2 or 2
+}
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////////// CORE LOGIC ///////////////////////////////////////////
@@ -99,8 +110,8 @@ function runProgram() {
     paddleA.position = Math.max(0, Math.min(paddleA.position, 340)); // Adjust the values based on your desired paddle height
     paddleB.position = Math.max(0, Math.min(paddleB.position, 340)); // Adjust the values based on your desired paddle height
 
-    paddleA.id.css('top', paddleA.position + 'px');
-    paddleA.id.css('top', paddleB.position + 'px');
+    $('#paddleA').css('top', paddleA.position + 'px');
+    $('#paddleB').css('top', paddleB.position + 'px');
 
     // Call the moveAIPaddle function to update the AI paddle movement
     moveAIPaddle();
@@ -113,8 +124,8 @@ function runProgram() {
     ball.xPosition += ball.xSpeed;
     ball.yPosition += ball.ySpeed;
 
-    ball.id.css('left', ball.xPosition + 'px');
-    ball.id.css('top', ball.yPosition + 'px');
+    $('#ball').css('left', ball.xPosition + 'px');
+    $('#ball').css('top', ball.yPosition + 'px');
   }
 
   /*
@@ -123,48 +134,48 @@ function runProgram() {
   /*
 Check for collisions between the ball and paddles/walls.
 */
-  function checkCollision() {
-    // Ball and paddle collision detection
-    if (
-      ball.xPosition <= 20 && // Check if the ball is touching or beyond paddleA's position
-      ball.yPosition >= paddleA.position &&
-      ball.yPosition <= paddleA.position + 60
-    ) {
-      ball.xSpeed = -ball.xSpeed; // Reverse the horizontal speed of the ball
-      ball.xSpeed += Math.sign(ball.xSpeed) * 0.5; // Increase the horizontal speed by 0.5 while maintaining the direction
-    } else if (
-      ball.xPosition >= 570 && // Check if the ball is touching or beyond paddleB's position
-      ball.yPosition >= paddleB.position &&
-      ball.yPosition <= paddleB.position + 60
-    ) {
-      ball.xSpeed = -ball.xSpeed; // Reverse the horizontal speed of the ball
-      ball.xSpeed += Math.sign(ball.xSpeed) * 0.5; // Increase the horizontal speed by 0.5 while maintaining the direction
-    }
+function checkCollision() {
+  // Ball and paddle collision detection
+  if (
+    ball.xPosition <= 20 && // Check if the ball is touching or beyond paddleA's position
+    ball.yPosition >= paddleA.position &&
+    ball.yPosition <= paddleA.position + 60
+  ) {
+    ball.xSpeed = -ball.xSpeed; // Reverse the horizontal speed of the ball
+    ball.xSpeed += Math.sign(ball.xSpeed) * 0.5; // Increase the horizontal speed by 0.5 while maintaining the direction
+  } else if (
+    ball.xPosition >= 570 && // Check if the ball is touching or beyond paddleB's position
+    ball.yPosition >= paddleB.position &&
+    ball.yPosition <= paddleB.position + 60
+  ) {
+    ball.xSpeed = -ball.xSpeed; // Reverse the horizontal speed of the ball
+    ball.xSpeed += Math.sign(ball.xSpeed) * 0.5; // Increase the horizontal speed by 0.5 while maintaining the direction
+  }
 
-    // Ball and wall collision detection
-    if (ball.yPosition <= 0 || ball.yPosition >= 390) {
-      ball.ySpeed = -ball.ySpeed; // Reverse the vertical speed of the ball
-    }
+  // Ball and wall collision detection
+  if (ball.yPosition <= 0 || ball.yPosition >= 390) {
+    ball.ySpeed = -ball.ySpeed; // Reverse the vertical speed of the ball
+  }
 
-    // Ball and score detection
-    if (ball.xPosition <= 0) {
-      scoreB++; // Increment player B's score
-      $('#scoreB').text(scoreB); // Update the score display for player B
-      if (scoreB >= 10) {
-        endGame('Player B wins!'); // Check if player B has won the game
-      } else {
-        resetBall(); // Reset the ball position and speeds
-      }
-    } else if (ball.xPosition >= 590) {
-      scoreA++; // Increment player A's score
-      $('#scoreA').text(scoreA); // Update the score display for player A
-      if (scoreA >= 10) {
-        endGame('Player A wins!'); // Check if player A has won the game
-      } else {
-        resetBall(); // Reset the ball position and speeds
-      }
+  // Ball and score detection
+  if (ball.xPosition <= 0) {
+    scoreB++; // Increment player B's score
+    $('#scoreB').text(scoreB); // Update the score display for player B
+    if (scoreB >= 10) {
+      endGame('Player B wins!'); // Check if player B has won the game
+    } else {
+      resetBall(); // Reset the ball position and speeds
+    }
+  } else if (ball.xPosition >= 590) {
+    scoreA++; // Increment player A's score
+    $('#scoreA').text(scoreA); // Update the score display for player A
+    if (scoreA >= 10) {
+      endGame('Player A wins!'); // Check if player A has won the game
+    } else {
+      resetBall(); // Reset the ball position and speeds
     }
   }
+}
 
   /*
   Function to end the game by stopping the interval timer and turning off event handlers.
